@@ -38,18 +38,46 @@ const User = sequelize.define('User', {
     allowNull: false,
     validate: {
       len: {
-        args: [6],
-        msg: 'La contraseña debe tener al menos 6 caracteres'
+        args: [12],
+        msg: 'La contraseña debe tener al menos 12 caracteres'
+      },
+      isStrongPassword(value) {
+        const hasUpperCase = /[A-Z]/.test(value);
+        const hasNumbers = /\d/.test(value);
+        const hasSymbols = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+        
+        if (!hasUpperCase) {
+          throw new Error('La contraseña debe contener al menos una letra mayúscula');
+        }
+        if (!hasNumbers) {
+          throw new Error('La contraseña debe contener al menos un número');
+        }
+        if (!hasSymbols) {
+          throw new Error('La contraseña debe contener al menos un símbolo (!@#$%^&*(),.?":{}|<>)');
+        }
       }
     }
   },
   role: {
-    type: DataTypes.ENUM('admin', 'coordinador', 'profesor', 'estudiante'),
+    type: DataTypes.ENUM('adminusuarios', 'profesor', 'padrefamilia', 'adminestudiantes', 'adminprofesores'),
     defaultValue: 'profesor',
     validate: {
       isIn: {
-        args: [['admin', 'coordinador', 'profesor', 'estudiante']],
-        msg: 'El rol debe ser admin, coordinador, profesor o estudiante'
+        args: [['adminusuarios', 'profesor', 'padrefamilia', 'adminestudiantes', 'adminprofesores']],
+        msg: 'El rol debe ser adminusuarios, profesor, padrefamilia, adminestudiantes o adminprofesores'
+      }
+    }
+  },
+  carnet: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    unique: {
+      msg: 'Ya existe un usuario con ese carnet'
+    },
+    validate: {
+      len: {
+        args: [3, 20],
+        msg: 'El carnet debe tener entre 3 y 20 caracteres'
       }
     }
   },
@@ -64,6 +92,39 @@ const User = sequelize.define('User', {
   lastLogin: {
     type: DataTypes.DATE,
     allowNull: true,
+  },
+  failedLoginAttempts: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    field: 'failed_login_attempts',
+  },
+  accountLockedUntil: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'account_locked_until',
+  },
+  // MFA/2FA fields
+  mfaEnabled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'mfa_enabled',
+  },
+  mfaSecret: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'mfa_secret',
+  },
+  // Password expiration fields
+  lastPasswordChange: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    defaultValue: DataTypes.NOW,
+    field: 'last_password_change',
+  },
+  passwordExpired: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'password_expired',
   }
 }, {
   tableName: 'users',
@@ -72,12 +133,44 @@ const User = sequelize.define('User', {
       if (user.password) {
         const salt = await bcrypt.genSalt(12);
         user.password = await bcrypt.hash(user.password, salt);
+        user.lastPasswordChange = new Date();
       }
     },
     beforeUpdate: async (user) => {
       if (user.changed('password')) {
         const salt = await bcrypt.genSalt(12);
         user.password = await bcrypt.hash(user.password, salt);
+        user.lastPasswordChange = new Date();
+        user.passwordExpired = false;
+      }
+    },
+    afterUpdate: async (user) => {
+      // Save password to history after successful update
+      if (user.changed('password') && user.password) {
+        const PasswordHistory = require('./PasswordHistory');
+        
+        // Save current password to history
+        await PasswordHistory.create({
+          userId: user.id,
+          passwordHash: user.password,
+          changedAt: new Date()
+        });
+        
+        // Keep only last 5 passwords
+        const histories = await PasswordHistory.findAll({
+          where: { userId: user.id },
+          order: [['changedAt', 'DESC']],
+          limit: 100
+        });
+        
+        if (histories.length > 5) {
+          const toDelete = histories.slice(5);
+          await PasswordHistory.destroy({
+            where: {
+              id: toDelete.map(h => h.id)
+            }
+          });
+        }
       }
     }
   }

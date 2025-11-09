@@ -1,41 +1,26 @@
 const User = require('./User');
 const Student = require('./Student');
 const Incident = require('./Incident');
+const Course = require('./Course');
+const Subject = require('./Subject');
+const StudentSubject = require('./StudentSubject');
+const PasswordHistory = require('./PasswordHistory');
+const Role = require('./Role');
+const Permission = require('./Permission');
+const RolePermission = require('./RolePermission');
 
-// Definir relaciones entre modelos
-
-// Usuario registra estudiantes
-User.hasMany(Student, {
-  foreignKey: 'registeredById',
-  as: 'registeredStudents'
-});
-Student.belongsTo(User, {
-  foreignKey: 'registeredById',
-  as: 'registeredBy'
-});
-
-// Usuario reporta incidentes
-User.hasMany(Incident, {
-  foreignKey: 'reportedById',
-  as: 'reportedIncidents'
-});
-Incident.belongsTo(User, {
-  foreignKey: 'reportedById',
-  as: 'reportedBy'
-});
-
-// Estudiante tiene incidentes
-Student.hasMany(Incident, {
-  foreignKey: 'studentId',
-  as: 'incidents'
-});
-Incident.belongsTo(Student, {
-  foreignKey: 'studentId',
-  as: 'student'
-});
+// Las asociaciones están definidas en associations.js
+// Este archivo solo exporta los modelos para compatibilidad
 
 module.exports = {
   User,
   Student,
-  Incident
+  Incident,
+  Course,
+  Subject,
+  StudentSubject,
+  PasswordHistory,
+  Role,
+  Permission,
+  RolePermission
 };

@@ -77,7 +77,14 @@ const getIncident = async (req, res, next) => {
         {
           model: Student,
           as: 'student',
-          attributes: ['id', 'firstName', 'lastName', 'documentNumber', 'grade', 'section', 'phone', 'email', 'parentName', 'parentPhone', 'parentEmail']
+          attributes: ['id', 'firstName', 'lastName', 'documentNumber', 'grade', 'section', 'phone', 'email'],
+          include: [
+            {
+              model: User,
+              as: 'parentUser',
+              attributes: ['id', 'name', 'email', 'phone', 'carnet']
+            }
+          ]
         },
         {
           model: User,
