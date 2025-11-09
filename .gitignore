@@ -54,3 +54,10 @@ temp/
 !**/migrations/**/*.sql
 # Si necesitas incluir migrations específicas, usa:
 # !backend/src/migrations/*.sql
+
+# Archivos Markdown - Documentación técnica y análisis
+*.md
+# Excepciones: READMEs principales SÍ se suben
+!README.md
+!README_PostgreSQL.md
+!**/README.md
