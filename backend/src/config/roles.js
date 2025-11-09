@@ -23,6 +23,9 @@ const PERMISSIONS = {
   READ_STUDENT: 'read_student',
   UPDATE_STUDENT: 'update_student',
   DELETE_STUDENT: 'delete_student',
+  MANAGE_STUDENTS: 'manage_students', // Permiso general para gestionar estudiantes
+  MANAGE_FAMILY_LINKS: 'manage_family_links', // Permiso específico para gestionar relaciones familiares
+  READ_COURSES: 'read_courses', // Permiso para ver cursos (solo lectura)
   
   // Gestión de profesores
   CREATE_TEACHER: 'create_teacher',
@@ -45,14 +48,18 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.READ_USER,
     PERMISSIONS.UPDATE_USER,
     PERMISSIONS.DELETE_USER,
-    PERMISSIONS.ACTIVATE_USER
+    PERMISSIONS.ACTIVATE_USER,
+    PERMISSIONS.READ_STUDENT, // Los admin usuarios necesitan ver estudiantes para vinculaciones familiares
+    PERMISSIONS.MANAGE_FAMILY_LINKS, // Los admin usuarios gestionan solo las relaciones familiares
+    PERMISSIONS.READ_COURSES // Los admin usuarios necesitan ver cursos para vinculaciones
   ],
   
   [ROLES.PROFESOR]: [
     PERMISSIONS.CREATE_INCIDENT,
     PERMISSIONS.READ_INCIDENT,
     PERMISSIONS.UPDATE_INCIDENT,
-    PERMISSIONS.READ_STUDENT
+    PERMISSIONS.READ_STUDENT,
+    PERMISSIONS.READ_COURSES // Los profesores pueden ver cursos
   ],
   
   [ROLES.PADRE_FAMILIA]: [
@@ -64,7 +71,9 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.CREATE_STUDENT,
     PERMISSIONS.READ_STUDENT,
     PERMISSIONS.UPDATE_STUDENT,
-    PERMISSIONS.DELETE_STUDENT
+    PERMISSIONS.DELETE_STUDENT,
+    PERMISSIONS.MANAGE_STUDENTS,
+    PERMISSIONS.READ_COURSES // Los admin estudiantes pueden ver cursos
   ],
   
   [ROLES.ADMIN_PROFESORES]: [

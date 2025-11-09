@@ -35,7 +35,7 @@ const WelcomeSection = () => {
     const actions = [];
 
     // Acciones para Admin Usuarios
-    if (hasPermission(user, PERMISSIONS.MANAGE_USERS)) {
+    /*if (hasPermission(user, PERMISSIONS.MANAGE_USERS)) {
       actions.push({
         title: 'Crear Usuario',
         description: 'Agregar nuevo usuario al sistema',
@@ -50,25 +50,25 @@ const WelcomeSection = () => {
         icon: UserGroupIcon,
         color: 'bg-green-500 hover:bg-green-600'
       });
-    }
+    }*/
 
     // Acciones para Admin Estudiantes
-    if (hasPermission(user, PERMISSIONS.MANAGE_STUDENTS)) {
+    /*if (hasPermission(user, PERMISSIONS.MANAGE_STUDENTS)) {
       actions.push({
         title: 'Crear Estudiante',
         description: 'Registrar nuevo estudiante',
-        href: '/estudiantes/crear',
+        href: '/gestion-estudiantes/nuevo',
         icon: UserPlusIcon,
         color: 'bg-purple-500 hover:bg-purple-600'
       });
       actions.push({
         title: 'Ver Estudiantes',
         description: 'Gestionar estudiantes',
-        href: '/estudiantes',
+        href: '/gestion-estudiantes',
         icon: AcademicCapIcon,
         color: 'bg-indigo-500 hover:bg-indigo-600'
       });
-    }
+    }*/
 
     // Acciones para Admin Profesores
     if (hasPermission(user, PERMISSIONS.MANAGE_TEACHERS)) {

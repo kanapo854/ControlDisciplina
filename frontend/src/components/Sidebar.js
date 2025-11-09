@@ -9,7 +9,9 @@ import {
   ExclamationTriangleIcon,
   UserIcon,
   ChartBarIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  ClipboardDocumentListIcon,
+  BookOpenIcon
 } from '@heroicons/react/24/outline';
 
 const Sidebar = () => {
@@ -41,6 +43,22 @@ const Sidebar = () => {
       href: '/estudiantes',
       icon: AcademicCapIcon,
       show: hasPermission(user, PERMISSIONS.MANAGE_STUDENTS) || hasPermission(user, PERMISSIONS.VIEW_STUDENTS)
+    },
+    
+    // Gestión avanzada de estudiantes - solo admin estudiantes
+    {
+      name: 'Gestión de Estudiantes',
+      href: '/gestion-estudiantes',
+      icon: ClipboardDocumentListIcon,
+      show: hasPermission(user, PERMISSIONS.MANAGE_STUDENTS)
+    },
+    
+    // Matrículas - solo admin estudiantes
+    {
+      name: 'Matrículas',
+      href: '/matriculas',
+      icon: BookOpenIcon,
+      show: hasPermission(user, PERMISSIONS.MANAGE_STUDENTS)
     },
     
     // Gestión de profesores - solo admin profesores

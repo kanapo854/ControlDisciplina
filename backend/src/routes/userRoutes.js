@@ -1,6 +1,7 @@
 const express = require('express');
-const { body } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const { Op } = require('sequelize');
+const { sequelize } = require('../config/database');
 const { auth, authorize } = require('../middleware/auth');
 const { requirePermission, requireRole, requireActiveUser } = require('../middleware/authorization');
 const { PERMISSIONS, ROLES } = require('../config/roles');
@@ -47,6 +48,86 @@ router.get('/', requirePermission(PERMISSIONS.READ_USER), async (req, res, next)
         limit,
         total: count,
         pages: Math.ceil(count / limit)
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @desc    Obtener estadísticas de usuarios para dashboard
+// @route   GET /api/users/stats
+// @access  Private (adminusuarios)
+router.get('/stats', requirePermission(PERMISSIONS.READ_USER), async (req, res, next) => {
+  try {
+    // Contar usuarios por rol
+    const usersByRole = await User.findAll({
+      attributes: [
+        'role',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+      ],
+      group: ['role'],
+      raw: true
+    });
+
+    // Contar usuarios activos vs inactivos
+    const usersByStatus = await User.findAll({
+      attributes: [
+        'isActive',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+      ],
+      group: ['isActive'],
+      raw: true
+    });
+
+    // Usuarios creados en los últimos 30 días
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const recentUsers = await User.count({
+      where: {
+        createdAt: {
+          [Op.gte]: thirtyDaysAgo
+        }
+      }
+    });
+
+    // Total de usuarios
+    const totalUsers = await User.count();
+
+    // Usuarios activos
+    const activeUsers = await User.count({
+      where: { isActive: true }
+    });
+
+    // Últimos usuarios creados
+    const latestUsers = await User.findAll({
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+      limit: 5
+    });
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalUsers,
+          activeUsers,
+          inactiveUsers: totalUsers - activeUsers,
+          recentUsers
+        },
+        charts: {
+          usersByRole: usersByRole.reduce((acc, item) => {
+            acc[item.role] = parseInt(item.count);
+            return acc;
+          }, {}),
+          usersByStatus: usersByStatus.reduce((acc, item) => {
+            acc[item.isActive ? 'active' : 'inactive'] = parseInt(item.count);
+            return acc;
+          }, {})
+        },
+        latestUsers
       }
     });
 
@@ -182,17 +263,55 @@ router.put('/:id', requirePermission(PERMISSIONS.UPDATE_USER), [
   body('name')
     .optional()
     .notEmpty()
-    .withMessage('El nombre no puede estar vacío'),
+    .withMessage('El nombre no puede estar vacío')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('El nombre debe tener entre 2 y 100 caracteres'),
   body('email')
     .optional()
     .isEmail()
-    .withMessage('Email inválido'),
+    .withMessage('Email inválido')
+    .normalizeEmail(),
+  body('password')
+    .optional()
+    .isLength({ min: 12 })
+    .withMessage('La contraseña debe tener al menos 12 caracteres')
+    .custom((value) => {
+      // Validar que tenga al menos una mayúscula, un número y un símbolo
+      const hasUpperCase = /[A-Z]/.test(value);
+      const hasNumber = /\d/.test(value);
+      const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+      
+      if (!hasUpperCase || !hasNumber || !hasSymbol) {
+        throw new Error('La contraseña debe contener al menos una mayúscula, un número y un símbolo');
+      }
+      
+      return true;
+    }),
   body('role')
     .optional()
     .isIn(['adminusuarios', 'profesor', 'padrefamilia', 'adminestudiantes', 'adminprofesores'])
-    .withMessage('Rol inválido')
+    .withMessage('Rol inválido'),
+  body('carnet')
+    .optional()
+    .isLength({ max: 20 })
+    .withMessage('El carnet no puede exceder 20 caracteres'),
+  body('phone')
+    .optional()
+    .isLength({ max: 20 })
+    .withMessage('El teléfono no puede exceder 20 caracteres')
 ], async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: errors.array()[0].msg,
+        details: errors.array()
+      });
+    }
+
+    const { name, email, password, role, carnet, phone } = req.body;
+
     const user = await User.findByPk(req.params.id);
     
     if (!user) {
@@ -202,7 +321,31 @@ router.put('/:id', requirePermission(PERMISSIONS.UPDATE_USER), [
       });
     }
 
-    await user.update(req.body);
+    // Verificar si el email ya existe (si se está cambiando)
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          error: 'El email ya está en uso'
+        });
+      }
+    }
+
+    // Preparar datos de actualización
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (role !== undefined) updateData.role = role;
+    if (carnet !== undefined) updateData.carnet = carnet;
+    if (phone !== undefined) updateData.phone = phone;
+    
+    // Solo actualizar password si se proporciona
+    if (password) {
+      updateData.password = password;
+    }
+
+    await user.update(updateData);
 
     // Recargar el usuario sin password
     const updatedUser = await User.findByPk(req.params.id, {
@@ -211,7 +354,8 @@ router.put('/:id', requirePermission(PERMISSIONS.UPDATE_USER), [
 
     res.json({
       success: true,
-      data: updatedUser
+      data: updatedUser,
+      message: 'Usuario actualizado exitosamente'
     });
 
   } catch (error) {

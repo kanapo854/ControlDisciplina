@@ -4,6 +4,8 @@ import { reportService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { hasPermission, PERMISSIONS, ROLES } from '../config/roles';
 import WelcomeSection from '../components/WelcomeSection';
+import UserAdminDashboard from '../components/UserAdminDashboard';
+import StudentAdminDashboard from '../components/StudentAdminDashboard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
   Users, 
@@ -16,9 +18,13 @@ const Dashboard = () => {
   const { user } = useAuth();
   
   // Solo cargar estadísticas si el usuario tiene permisos para ver reportes
-  const shouldLoadStats = hasPermission(user, PERMISSIONS.VIEW_INCIDENTS) || 
-                          hasPermission(user, PERMISSIONS.MANAGE_USERS) ||
-                          hasPermission(user, PERMISSIONS.MANAGE_STUDENTS);
+  // y NO es administrador de usuarios o estudiantes (que tienen su propio dashboard)
+  const shouldLoadStats = user.role !== ROLES.ADMIN_USUARIOS && 
+    user.role !== ROLES.ADMIN_ESTUDIANTES && (
+    hasPermission(user, PERMISSIONS.VIEW_INCIDENTS) || 
+    hasPermission(user, PERMISSIONS.MANAGE_USERS) ||
+    hasPermission(user, PERMISSIONS.MANAGE_STUDENTS)
+  );
   
   const { data: dashboardData, isLoading, error } = useQuery(
     'dashboard',
@@ -28,6 +34,26 @@ const Dashboard = () => {
       enabled: shouldLoadStats
     }
   );
+
+  // Dashboard específico para administrador de usuarios
+  if (user.role === ROLES.ADMIN_USUARIOS) {
+    return (
+      <div className="space-y-6">
+        <WelcomeSection />
+        <UserAdminDashboard />
+      </div>
+    );
+  }
+
+  // Dashboard específico para administrador de estudiantes
+  if (user.role === ROLES.ADMIN_ESTUDIANTES) {
+    return (
+      <div className="space-y-6">
+        <WelcomeSection />
+        <StudentAdminDashboard />
+      </div>
+    );
+  }
 
   // Mostrar solo la sección de bienvenida para padres de familia
   if (user.role === ROLES.PADRE_FAMILIA) {

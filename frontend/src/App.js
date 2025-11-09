@@ -18,8 +18,14 @@ import Incidents from './pages/Incidents';
 import IncidentForm from './pages/IncidentForm';
 import IncidentDetail from './pages/IncidentDetail';
 import Reports from './pages/Reports';
-import Users from './pages/Users';
+import UsersPage from './pages/UsersPage';
 import Profile from './pages/Profile';
+
+// Componentes de gestión de estudiantes
+import StudentsList from './components/StudentsList';
+import { default as StudentFormComponent } from './components/StudentForm';
+import StudentDetails from './components/StudentDetails';
+import EnrollmentManager from './components/EnrollmentManager';
 
 // Configurar React Query
 const queryClient = new QueryClient({
@@ -102,6 +108,14 @@ const AppRoutes = () => {
       <Route path="/estudiantes/:id/editar" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
       <Route path="/estudiantes/:id" element={<ProtectedRoute><StudentDetail /></ProtectedRoute>} />
       
+      {/* Gestión avanzada de estudiantes */}
+      <Route path="/gestion-estudiantes" element={<ProtectedRoute><StudentsList /></ProtectedRoute>} />
+      <Route path="/gestion-estudiantes/nuevo" element={<ProtectedRoute><StudentFormComponent /></ProtectedRoute>} />
+      <Route path="/gestion-estudiantes/:id" element={<ProtectedRoute><StudentDetails /></ProtectedRoute>} />
+      <Route path="/gestion-estudiantes/:id/editar" element={<ProtectedRoute><StudentFormComponent /></ProtectedRoute>} />
+      <Route path="/gestion-estudiantes/:id/materias" element={<ProtectedRoute><EnrollmentManager /></ProtectedRoute>} />
+      <Route path="/matriculas" element={<ProtectedRoute><EnrollmentManager /></ProtectedRoute>} />
+      
       {/* Incidentes */}
       <Route path="/incidentes" element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
       <Route path="/incidentes/crear" element={<ProtectedRoute><IncidentForm /></ProtectedRoute>} />
@@ -109,14 +123,10 @@ const AppRoutes = () => {
       <Route path="/incidentes/:id" element={<ProtectedRoute><IncidentDetail /></ProtectedRoute>} />
       
       {/* Usuarios */}
-      <Route path="/usuarios" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-      <Route path="/usuarios/crear" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-      <Route path="/usuarios/:id/editar" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+      <Route path="/usuarios/*" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
       
       {/* Profesores */}
-      <Route path="/profesores" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-      <Route path="/profesores/crear" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-      <Route path="/profesores/:id/editar" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+      <Route path="/profesores/*" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
       
       {/* Padres de familia */}
       <Route path="/mis-hijos" element={<ProtectedRoute><Students /></ProtectedRoute>} />
