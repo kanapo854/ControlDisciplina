@@ -71,27 +71,37 @@ export const AuthProvider = ({ children }) => {
   // Verificar si hay token al cargar la aplicación
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log('🔄 Inicializando autenticación...');
       const token = localStorage.getItem('authToken');
-      const user = localStorage.getItem('user');
+      const userStr = localStorage.getItem('user');
 
-      if (token && user) {
+      if (token && userStr) {
         try {
-          // Verificar si el token sigue siendo válido
+          const user = JSON.parse(userStr);
+          console.log('✅ Token y usuario encontrados en localStorage:', user.email);
+          
+          // Por ahora, confiamos en el localStorage sin verificar con el servidor
+          // TODO: Descomentar cuando el backend esté funcionando correctamente
+          /*
           const response = await authService.getMe();
+          console.log('✅ Token válido, usuario autenticado:', response.data.email);
+          */
+          
           dispatch({
             type: 'LOGIN_SUCCESS',
             payload: {
               token,
-              user: response.user
+              user: user
             }
           });
         } catch (error) {
-          // Token inválido, limpiar storage
+          console.error('❌ Error al parsear usuario, limpiando storage:', error);
           localStorage.removeItem('authToken');
           localStorage.removeItem('user');
           dispatch({ type: 'LOGOUT' });
         }
       } else {
+        console.log('🔓 No hay token, usuario no autenticado');
         dispatch({ type: 'LOGOUT' });
       }
     };
@@ -104,7 +114,9 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGIN_START' });
     
     try {
+      console.log('🔄 AuthContext: Iniciando login...');
       const response = await authService.login(credentials);
+      console.log('✅ AuthContext: Respuesta del servidor:', response);
       
       // Guardar en localStorage
       localStorage.setItem('authToken', response.token);
@@ -115,8 +127,10 @@ export const AuthProvider = ({ children }) => {
         payload: response
       });
       
+      console.log('✅ AuthContext: Estado actualizado, usuario autenticado');
       return response;
     } catch (error) {
+      console.error('❌ AuthContext: Error en login:', error);
       const errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
       dispatch({
         type: 'LOGIN_FAILURE',

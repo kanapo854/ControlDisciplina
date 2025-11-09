@@ -43,7 +43,7 @@ const register = async (req, res, next) => {
     });
 
     // Generar token
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
 
     res.status(201).json({
       success: true,
@@ -102,7 +102,7 @@ const login = async (req, res, next) => {
     await user.save();
 
     // Generar token
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
 
     res.json({
       success: true,
@@ -124,7 +124,7 @@ const getMe = async (req, res, next) => {
     
     res.json({
       success: true,
-      user: user.getPublicData()
+      data: user.getPublicData()
     });
   } catch (error) {
     next(error);

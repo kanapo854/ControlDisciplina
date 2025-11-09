@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -11,8 +11,16 @@ const Login = () => {
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loading } = useAuth();
+  const { login, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log('🔄 Usuario ya autenticado, redirigiendo...');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -25,10 +33,19 @@ const Login = () => {
     e.preventDefault();
     
     try {
-      await login(formData);
+      console.log('🔄 Intentando login con:', formData.email);
+      const response = await login(formData);
+      console.log('✅ Login exitoso:', response);
       toast.success('¡Inicio de sesión exitoso!');
-      navigate('/dashboard');
+      
+      // Esperar un poco para que el estado se actualice y luego navegar
+      setTimeout(() => {
+        console.log('🔄 Navegando al dashboard...');
+        navigate('/dashboard', { replace: true });
+      }, 100);
+      
     } catch (error) {
+      console.error('❌ Error en login:', error);
       toast.error(error.response?.data?.error || 'Error al iniciar sesión');
     }
   };

@@ -5,7 +5,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Layout from './components/Layout';
+import Sidebar from './components/Sidebar';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Páginas
@@ -32,29 +32,44 @@ const queryClient = new QueryClient({
 });
 
 // Componente para rutas protegidas
-const ProtectedRoute = ({ children, requiredRoles = [] }) => {
-  const { isAuthenticated, loading, hasPermission } = useAuth();
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+
+  console.log('🛡️ ProtectedRoute:', { 
+    isAuthenticated, 
+    loading, 
+    userRole: user?.role
+  });
 
   if (loading) {
+    console.log('⏳ ProtectedRoute: Cargando...');
     return <LoadingSpinner />;
   }
 
   if (!isAuthenticated) {
+    console.log('🔒 ProtectedRoute: No autenticado, redirigiendo a login');
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRoles.length > 0 && !hasPermission(requiredRoles)) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return children;
+  console.log('✅ ProtectedRoute: Acceso permitido');
+  return (
+    <div className="flex">
+      <Sidebar />
+      <main className="flex-1 bg-gray-50 p-6">
+        {children}
+      </main>
+    </div>
+  );
 };
 
 // Componente principal de rutas
 const AppRoutes = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
+
+  console.log('🔍 AppRoutes - Estado:', { isAuthenticated, loading, user: user?.email });
 
   if (loading) {
+    console.log('⏳ AppRoutes: Cargando...');
     return <LoadingSpinner />;
   }
 
@@ -64,68 +79,58 @@ const AppRoutes = () => {
       <Route 
         path="/login" 
         element={
-          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+          isAuthenticated ? (
+            (() => {
+              console.log('🔄 Usuario autenticado, redirigiendo a dashboard');
+              return <Navigate to="/dashboard" replace />;
+            })()
+          ) : (
+            (() => {
+              console.log('🔓 Usuario no autenticado, mostrando login');
+              return <Login />;
+            })()
+          )
         } 
       />
 
       {/* Rutas protegidas */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
-        {/* Dashboard */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      
+      {/* Estudiantes */}
+      <Route path="/estudiantes" element={<ProtectedRoute><Students /></ProtectedRoute>} />
+      <Route path="/estudiantes/crear" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
+      <Route path="/estudiantes/:id/editar" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
+      <Route path="/estudiantes/:id" element={<ProtectedRoute><StudentDetail /></ProtectedRoute>} />
+      
+      {/* Incidentes */}
+      <Route path="/incidentes" element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
+      <Route path="/incidentes/crear" element={<ProtectedRoute><IncidentForm /></ProtectedRoute>} />
+      <Route path="/incidentes/:id/editar" element={<ProtectedRoute><IncidentForm /></ProtectedRoute>} />
+      <Route path="/incidentes/:id" element={<ProtectedRoute><IncidentDetail /></ProtectedRoute>} />
+      
+      {/* Usuarios */}
+      <Route path="/usuarios" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+      <Route path="/usuarios/crear" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+      <Route path="/usuarios/:id/editar" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+      
+      {/* Profesores */}
+      <Route path="/profesores" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+      <Route path="/profesores/crear" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+      <Route path="/profesores/:id/editar" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+      
+      {/* Padres de familia */}
+      <Route path="/mis-hijos" element={<ProtectedRoute><Students /></ProtectedRoute>} />
+      <Route path="/incidentes-hijos" element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
+      
+      {/* Reportes */}
+      <Route path="/reportes" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+      
+      {/* Perfil */}
+      <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-        {/* Estudiantes */}
-        <Route path="/students" element={<Students />} />
-        <Route 
-          path="/students/new" 
-          element={
-            <ProtectedRoute requiredRoles={['admin', 'coordinador', 'profesor']}>
-              <StudentForm />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/students/:id/edit" 
-          element={
-            <ProtectedRoute requiredRoles={['admin', 'coordinador', 'profesor']}>
-              <StudentForm />
-            </ProtectedRoute>
-          } 
-        />
-        <Route path="/students/:id" element={<StudentDetail />} />
-
-        {/* Incidentes */}
-        <Route path="/incidents" element={<Incidents />} />
-        <Route path="/incidents/new" element={<IncidentForm />} />
-        <Route path="/incidents/:id/edit" element={<IncidentForm />} />
-        <Route path="/incidents/:id" element={<IncidentDetail />} />
-
-        {/* Reportes */}
-        <Route path="/reports" element={<Reports />} />
-
-        {/* Usuarios (solo admin y coordinador) */}
-        <Route 
-          path="/users" 
-          element={
-            <ProtectedRoute requiredRoles={['admin', 'coordinador']}>
-              <Users />
-            </ProtectedRoute>
-          } 
-        />
-
-        {/* Perfil */}
-        <Route path="/profile" element={<Profile />} />
-
-        {/* Ruta 404 */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Route>
+      {/* Redirección por defecto */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 };

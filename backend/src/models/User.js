@@ -38,18 +38,46 @@ const User = sequelize.define('User', {
     allowNull: false,
     validate: {
       len: {
-        args: [6],
-        msg: 'La contraseña debe tener al menos 6 caracteres'
+        args: [12],
+        msg: 'La contraseña debe tener al menos 12 caracteres'
+      },
+      isStrongPassword(value) {
+        const hasUpperCase = /[A-Z]/.test(value);
+        const hasNumbers = /\d/.test(value);
+        const hasSymbols = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+        
+        if (!hasUpperCase) {
+          throw new Error('La contraseña debe contener al menos una letra mayúscula');
+        }
+        if (!hasNumbers) {
+          throw new Error('La contraseña debe contener al menos un número');
+        }
+        if (!hasSymbols) {
+          throw new Error('La contraseña debe contener al menos un símbolo (!@#$%^&*(),.?":{}|<>)');
+        }
       }
     }
   },
   role: {
-    type: DataTypes.ENUM('admin', 'coordinador', 'profesor', 'estudiante'),
+    type: DataTypes.ENUM('adminusuarios', 'profesor', 'padrefamilia', 'adminestudiantes', 'adminprofesores'),
     defaultValue: 'profesor',
     validate: {
       isIn: {
-        args: [['admin', 'coordinador', 'profesor', 'estudiante']],
-        msg: 'El rol debe ser admin, coordinador, profesor o estudiante'
+        args: [['adminusuarios', 'profesor', 'padrefamilia', 'adminestudiantes', 'adminprofesores']],
+        msg: 'El rol debe ser adminusuarios, profesor, padrefamilia, adminestudiantes o adminprofesores'
+      }
+    }
+  },
+  carnet: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    unique: {
+      msg: 'Ya existe un usuario con ese carnet'
+    },
+    validate: {
+      len: {
+        args: [3, 20],
+        msg: 'El carnet debe tener entre 3 y 20 caracteres'
       }
     }
   },
