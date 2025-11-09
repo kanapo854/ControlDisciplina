@@ -57,7 +57,8 @@ temp/
 
 # Archivos Markdown - Documentación técnica y análisis
 *.md
-# Excepciones: READMEs principales SÍ se suben
+# Excepciones: READMEs principales y guías de despliegue SÍ se suben
 !README.md
 !README_PostgreSQL.md
+!DEPLOYMENT.md
 !**/README.md
