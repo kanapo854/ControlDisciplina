@@ -12,7 +12,11 @@ const auth = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET no está configurado en las variables de entorno');
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findByPk(decoded.id, {
       attributes: { exclude: ['password'] }
     });

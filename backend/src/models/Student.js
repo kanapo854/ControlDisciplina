@@ -92,33 +92,6 @@ const Student = sequelize.define('Student', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  parentName: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: {
-        msg: 'El nombre del padre/madre/acudiente es requerido'
-      }
-    }
-  },
-  parentPhone: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: {
-        msg: 'El teléfono del padre/madre/acudiente es requerido'
-      }
-    }
-  },
-  parentEmail: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    validate: {
-      isEmail: {
-        msg: 'Email del padre/madre inválido'
-      }
-    }
-  },
   emergencyContact: {
     type: DataTypes.JSONB,
     allowNull: true,
@@ -137,6 +110,26 @@ const Student = sequelize.define('Student', {
   enrollmentDate: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
+  },
+  courseId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'course_id',
+    references: {
+      model: 'courses',
+      key: 'id'
+    },
+    comment: 'ID del curso al que pertenece el estudiante (requerido para secundaria)'
+  },
+  parentUserId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'parent_user_id',
+    references: {
+      model: 'users',
+      key: 'id'
+    },
+    comment: 'ID del usuario padre/madre que tiene acceso al sistema (opcional)'
   },
   isActive: {
     type: DataTypes.BOOLEAN,

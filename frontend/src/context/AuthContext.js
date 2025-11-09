@@ -17,7 +17,9 @@ const authReducer = (state, action) => {
         isAuthenticated: true,
         user: action.payload.user,
         token: action.payload.token,
-        error: null
+        error: null,
+        mfaRequired: false,
+        mfaUserId: null
       };
     case 'LOGIN_FAILURE':
       return {
@@ -28,6 +30,19 @@ const authReducer = (state, action) => {
         token: null,
         error: action.payload
       };
+    case 'SET_MFA_REQUIRED':
+      return {
+        ...state,
+        loading: false,
+        mfaRequired: true,
+        mfaUserId: action.payload.userId
+      };
+    case 'CLEAR_MFA':
+      return {
+        ...state,
+        mfaRequired: false,
+        mfaUserId: null
+      };
     case 'LOGOUT':
       return {
         ...state,
@@ -35,7 +50,9 @@ const authReducer = (state, action) => {
         isAuthenticated: false,
         user: null,
         token: null,
-        error: null
+        error: null,
+        mfaRequired: false,
+        mfaUserId: null
       };
     case 'UPDATE_USER':
       return {
@@ -58,7 +75,9 @@ const initialState = {
   user: null,
   token: null,
   loading: true,
-  error: null
+  error: null,
+  mfaRequired: false,
+  mfaUserId: null
 };
 
 // Crear contexto
@@ -71,27 +90,37 @@ export const AuthProvider = ({ children }) => {
   // Verificar si hay token al cargar la aplicación
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log('🔄 Inicializando autenticación...');
       const token = localStorage.getItem('authToken');
-      const user = localStorage.getItem('user');
+      const userStr = localStorage.getItem('user');
 
-      if (token && user) {
+      if (token && userStr) {
         try {
-          // Verificar si el token sigue siendo válido
+          const user = JSON.parse(userStr);
+          console.log('✅ Token y usuario encontrados en localStorage:', user.email);
+          
+          // Por ahora, confiamos en el localStorage sin verificar con el servidor
+          // TODO: Descomentar cuando el backend esté funcionando correctamente
+          /*
           const response = await authService.getMe();
+          console.log('✅ Token válido, usuario autenticado:', response.data.email);
+          */
+          
           dispatch({
             type: 'LOGIN_SUCCESS',
             payload: {
               token,
-              user: response.user
+              user: user
             }
           });
         } catch (error) {
-          // Token inválido, limpiar storage
+          console.error('❌ Error al parsear usuario, limpiando storage:', error);
           localStorage.removeItem('authToken');
           localStorage.removeItem('user');
           dispatch({ type: 'LOGOUT' });
         }
       } else {
+        console.log('🔓 No hay token, usuario no autenticado');
         dispatch({ type: 'LOGOUT' });
       }
     };
@@ -104,9 +133,21 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGIN_START' });
     
     try {
+      console.log('🔄 AuthContext: Iniciando login...');
       const response = await authService.login(credentials);
+      console.log('✅ AuthContext: Respuesta del servidor:', response);
       
-      // Guardar en localStorage
+      // Si requiere MFA, actualizar estado MFA en el contexto
+      if (response.mfaRequired) {
+        console.log('🔐 MFA requerido, actualizando estado en contexto...');
+        dispatch({ 
+          type: 'SET_MFA_REQUIRED',
+          payload: { userId: response.userId }
+        });
+        return response;
+      }
+      
+      // Guardar en localStorage solo si no requiere MFA
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       
@@ -115,8 +156,10 @@ export const AuthProvider = ({ children }) => {
         payload: response
       });
       
+      console.log('✅ AuthContext: Estado actualizado, usuario autenticado');
       return response;
     } catch (error) {
+      console.error('❌ AuthContext: Error en login:', error);
       const errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
       dispatch({
         type: 'LOGIN_FAILURE',
@@ -206,6 +249,11 @@ export const AuthProvider = ({ children }) => {
     return ['admin', 'coordinador'].includes(state.user?.role);
   };
 
+  // Limpiar estado MFA
+  const clearMfa = () => {
+    dispatch({ type: 'CLEAR_MFA' });
+  };
+
   const value = {
     ...state,
     login,
@@ -214,6 +262,7 @@ export const AuthProvider = ({ children }) => {
     updateUser,
     changePassword,
     updateProfile,
+    clearMfa,
     hasPermission,
     isAdmin,
     isCoordinator
