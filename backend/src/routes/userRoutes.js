@@ -397,4 +397,86 @@ router.put('/:id/status', requirePermission(PERMISSIONS.ACTIVATE_USER), async (r
   }
 });
 
+// @desc    Desbloquear cuenta de usuario
+// @route   PUT /api/users/:id/unlock
+// @access  Private (adminusuarios)
+router.put('/:id/unlock', requirePermission(PERMISSIONS.ACTIVATE_USER), async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Usuario no encontrado'
+      });
+    }
+
+    // Resetear contador de intentos fallidos y desbloquear cuenta
+    await user.update({
+      failedLoginAttempts: 0,
+      accountLockedUntil: null
+    });
+
+    // Recargar el usuario sin password
+    const updatedUser = await User.findByPk(req.params.id, {
+      attributes: { exclude: ['password'] }
+    });
+
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: 'Cuenta desbloqueada exitosamente'
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @desc    Activar/Desactivar MFA para un usuario
+// @route   PUT /api/users/:id/mfa
+// @access  Private (adminusuarios)
+router.put('/:id/mfa', requirePermission(PERMISSIONS.UPDATE_USER), [
+  body('enabled')
+    .isBoolean()
+    .withMessage('El campo enabled debe ser verdadero o falso')
+], async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { enabled } = req.body;
+    const user = await User.findByPk(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Usuario no encontrado'
+      });
+    }
+
+    // Actualizar estado de MFA
+    await user.update({ mfaEnabled: enabled });
+
+    // Recargar el usuario sin password
+    const updatedUser = await User.findByPk(req.params.id, {
+      attributes: { exclude: ['password'] }
+    });
+
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: `MFA ${enabled ? 'activado' : 'desactivado'} exitosamente para ${user.name}`
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

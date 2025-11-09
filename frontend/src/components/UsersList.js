@@ -12,7 +12,9 @@ import {
   MagnifyingGlassIcon,
   CheckCircleIcon,
   XCircleIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  LockOpenIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 
 const UsersList = () => {
@@ -46,6 +48,34 @@ const UsersList = () => {
       },
       onError: (error) => {
         const message = error.response?.data?.error || 'Error al actualizar estado';
+        toast.error(message);
+      }
+    }
+  );
+
+  const unlockUserMutation = useMutation(
+    (id) => userService.unlockUser(id),
+    {
+      onSuccess: (data) => {
+        toast.success(data.message || 'Usuario desbloqueado exitosamente');
+        queryClient.invalidateQueries('users');
+      },
+      onError: (error) => {
+        const message = error.response?.data?.error || 'Error al desbloquear usuario';
+        toast.error(message);
+      }
+    }
+  );
+
+  const toggleMFAMutation = useMutation(
+    ({ id, enabled }) => userService.toggleMFA(id, enabled),
+    {
+      onSuccess: (data) => {
+        toast.success(data.message || 'MFA actualizado exitosamente');
+        queryClient.invalidateQueries('users');
+      },
+      onError: (error) => {
+        const message = error.response?.data?.error || 'Error al actualizar MFA';
         toast.error(message);
       }
     }
@@ -99,7 +129,14 @@ const UsersList = () => {
           <h2 className="text-lg font-medium text-gray-900">
             Lista de Usuarios ({users.length})
           </h2>
-          <div className="mt-3 sm:mt-0 flex space-x-3">
+          <div className="mt-3 sm:mt-0 flex flex-wrap gap-3">
+            <Link
+              to="roles"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <ShieldCheckIcon className="h-4 w-4 mr-2" />
+              Gestionar Roles
+            </Link>
             <Link
               to="relaciones-familiares"
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
@@ -213,13 +250,25 @@ const UsersList = () => {
                     {user.carnet || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.isActive ? 'Activo' : 'Inactivo'}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        user.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {user.isActive ? 'Activo' : 'Inactivo'}
+                      </span>
+                      {user.accountLockedUntil && new Date(user.accountLockedUntil) > new Date() && (
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                          🔒 Bloqueado
+                        </span>
+                      )}
+                      {user.mfaEnabled && (
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                          🛡️ MFA
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {user.lastLogin 
@@ -227,29 +276,56 @@ const UsersList = () => {
                       : 'Nunca'
                     }
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                    <Link
-                      to={`editar/${user.id}`}
-                      className="text-blue-600 hover:text-blue-900"
-                      title="Editar usuario"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </Link>
-                    <button
-                      onClick={() => handleStatusToggle(user)}
-                      className={`${
-                        user.isActive 
-                          ? 'text-red-600 hover:text-red-900' 
-                          : 'text-green-600 hover:text-green-900'
-                      }`}
-                      title={user.isActive ? 'Desactivar usuario' : 'Activar usuario'}
-                    >
-                      {user.isActive ? (
-                        <XCircleIcon className="h-4 w-4" />
-                      ) : (
-                        <CheckCircleIcon className="h-4 w-4" />
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end gap-2">
+                      <Link
+                        to={`editar/${user.id}`}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Editar usuario"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </Link>
+                      
+                      {user.accountLockedUntil && new Date(user.accountLockedUntil) > new Date() && (
+                        <button
+                          onClick={() => unlockUserMutation.mutate(user.id)}
+                          disabled={unlockUserMutation.isLoading}
+                          className="text-orange-600 hover:text-orange-900 disabled:opacity-50"
+                          title="Desbloquear cuenta"
+                        >
+                          <LockOpenIcon className="h-4 w-4" />
+                        </button>
                       )}
-                    </button>
+                      
+                      <button
+                        onClick={() => toggleMFAMutation.mutate({ id: user.id, enabled: !user.mfaEnabled })}
+                        disabled={toggleMFAMutation.isLoading}
+                        className={`${
+                          user.mfaEnabled 
+                            ? 'text-purple-600 hover:text-purple-900' 
+                            : 'text-gray-400 hover:text-purple-600'
+                        } disabled:opacity-50`}
+                        title={user.mfaEnabled ? 'Desactivar MFA' : 'Activar MFA'}
+                      >
+                        <ShieldCheckIcon className={`h-4 w-4 ${user.mfaEnabled ? 'fill-current' : ''}`} />
+                      </button>
+                      
+                      <button
+                        onClick={() => handleStatusToggle(user)}
+                        className={`${
+                          user.isActive 
+                            ? 'text-red-600 hover:text-red-900' 
+                            : 'text-green-600 hover:text-green-900'
+                        }`}
+                        title={user.isActive ? 'Desactivar usuario' : 'Activar usuario'}
+                      >
+                        {user.isActive ? (
+                          <XCircleIcon className="h-4 w-4" />
+                        ) : (
+                          <CheckCircleIcon className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

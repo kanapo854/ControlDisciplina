@@ -16,9 +16,14 @@ const reportRoutes = require('./routes/reportRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const subjectRoutes = require('./routes/subjectRoutes');
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
+const roleRoutes = require('./routes/roleRoutes');
+const permissionRoutes = require('./routes/permissionRoutes');
 
 // Importar asociaciones
 require('./models/associations');
+
+// Importar servicios de seguridad
+const { startPasswordExpirationScheduler } = require('./services/passwordExpirationService');
 
 const app = express();
 
@@ -31,6 +36,10 @@ const initializeDefaultData = async () => {
     // Crear materias por defecto
     const { seedSubjects } = require('./seeders/subjectSeeder');
     await seedSubjects();
+    
+    // Iniciar verificación automática de expiración de contraseñas
+    startPasswordExpirationScheduler();
+    console.log('✅ Password expiration scheduler initialized');
   } catch (error) {
     console.error('Error al inicializar datos por defecto:', error);
   }
@@ -59,6 +68,8 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/permissions', permissionRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
@@ -76,12 +87,10 @@ app.use('*', (req, res) => {
   res.status(404).json({ message: 'Ruta no encontrada' });
 });
 
-const PORT = process.env.PORT || 5000;
+// Configurar servidor (HTTP en desarrollo, HTTPS en producción)
+const { configureServer } = require('./config/https');
 
-app.listen(PORT, async () => {
-  console.log(`Servidor ejecutándose en puerto ${PORT}`);
-  console.log(`Entorno: ${process.env.NODE_ENV || 'development'}`);
-  
+configureServer(app).on('listening', async () => {
   // Inicializar datos por defecto después de que el servidor esté corriendo
   await initializeDefaultData();
 });

@@ -198,6 +198,16 @@ export const userService = {
   updateUserStatus: async (id, statusData) => {
     const response = await api.put(`/users/${id}/status`, statusData);
     return response.data;
+  },
+  
+  unlockUser: async (id) => {
+    const response = await api.put(`/users/${id}/unlock`);
+    return response.data;
+  },
+  
+  toggleMFA: async (id, enabled) => {
+    const response = await api.put(`/users/${id}/mfa`, { enabled });
+    return response.data;
   }
 };
 
@@ -309,6 +319,97 @@ export const enrollmentService = {
   
   validateEnrollments: async (studentId, params = {}) => {
     const response = await api.get(`/enrollments/validate/${studentId}`, { params });
+    return response.data;
+  }
+};
+
+// Servicios de roles
+export const roleService = {
+  getRoles: async (params = {}) => {
+    const response = await api.get('/roles', { params });
+    return response.data;
+  },
+  
+  getRole: async (id) => {
+    const response = await api.get(`/roles/${id}`);
+    return response.data;
+  },
+  
+  createRole: async (roleData) => {
+    const response = await api.post('/roles', roleData);
+    return response.data;
+  },
+  
+  updateRole: async (id, roleData) => {
+    const response = await api.put(`/roles/${id}`, roleData);
+    return response.data;
+  },
+  
+  deleteRole: async (id) => {
+    const response = await api.delete(`/roles/${id}`);
+    return response.data;
+  },
+  
+  getRolePermissions: async (id) => {
+    const response = await api.get(`/roles/${id}/permissions`);
+    return response.data;
+  },
+  
+  assignPermissions: async (id, permissionIds) => {
+    const response = await api.post(`/roles/${id}/permissions`, { permissionIds });
+    return response.data;
+  },
+  
+  addPermission: async (roleId, permissionId) => {
+    const response = await api.post(`/roles/${roleId}/permissions/${permissionId}`);
+    return response.data;
+  },
+  
+  removePermission: async (roleId, permissionId) => {
+    const response = await api.delete(`/roles/${roleId}/permissions/${permissionId}`);
+    return response.data;
+  },
+  
+  getUnusedRoles: async () => {
+    const response = await api.get('/roles/unused');
+    return response.data;
+  },
+  
+  getRoleStats: async () => {
+    const response = await api.get('/roles/stats');
+    return response.data;
+  }
+};
+
+// Servicios de permisos
+export const permissionService = {
+  getPermissions: async (params = {}) => {
+    const response = await api.get('/permissions', { params });
+    return response.data;
+  },
+  
+  getPermission: async (id) => {
+    const response = await api.get(`/permissions/${id}`);
+    return response.data;
+  },
+  
+  createPermission: async (permissionData) => {
+    const response = await api.post('/permissions', permissionData);
+    return response.data;
+  },
+  
+  updatePermission: async (id, permissionData) => {
+    const response = await api.put(`/permissions/${id}`, permissionData);
+    return response.data;
+  },
+  
+  deletePermission: async (id) => {
+    const response = await api.delete(`/permissions/${id}`);
+    return response.data;
+  },
+  
+  getCategories: async () => {
+    const response = await api.get('/permissions/categories');
     return response.data;
   }
 };

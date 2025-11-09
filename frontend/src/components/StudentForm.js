@@ -39,7 +39,7 @@ const StudentForm = () => {
     lastName: '',
     documentNumber: '',
     documentType: 'tarjeta_identidad',
-    courseId: '', // Solo necesitamos el curso
+    courseId: '',
     birthDate: '',
     gender: 'masculino',
     phone: '',
@@ -167,17 +167,10 @@ const StudentForm = () => {
     }
 
     // Validación en tiempo real para campos específicos
-    if (name === 'parentEmail' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    if (name === 'phone' && value && !/^\d{8}$/.test(value.replace(/\D/g, ''))) {
       setErrors(prev => ({
         ...prev,
-        parentEmail: 'Email del acudiente inválido'
-      }));
-    }
-
-    if ((name === 'phone' || name === 'parentPhone') && value && !/^\d{8}$/.test(value.replace(/\D/g, ''))) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: 'El teléfono debe tener 10 dígitos'
+        phone: 'El teléfono debe tener 8 dígitos'
       }));
     }
 
@@ -219,8 +212,8 @@ const StudentForm = () => {
     if (!formData.birthDate) newErrors.birthDate = 'La fecha de nacimiento es requerida';
     
     // Validaciones de formato
-    if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
-      newErrors.phone = 'El teléfono debe tener 10 dígitos';
+    if (formData.phone && !/^\d{8}$/.test(formData.phone.replace(/\D/g, ''))) {
+      newErrors.phone = 'El teléfono debe tener 8 dígitos';
     }
 
     // Validación de edad
@@ -535,9 +528,14 @@ const StudentForm = () => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Teléfono del estudiante"
+                className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.phone ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Ej: 12345678"
+                maxLength="8"
               />
+              {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+              {!errors.phone && <p className="mt-1 text-sm text-gray-500">8 dígitos</p>}
             </div>
 
             <div className="md:col-span-2"></div>
@@ -559,71 +557,14 @@ const StudentForm = () => {
           </div>
         </div>
 
-        {/* Información del Padre/Madre/Acudiente */}
+        {/* Contacto de Emergencia */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <UserGroupIcon className="h-5 w-5 text-orange-500 mr-2" />
-            <h3 className="text-lg font-medium text-gray-900">Padre/Madre/Acudiente (Opcional)</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Esta información se puede completar más tarde si no está disponible
-            </p>
+            <PhoneIcon className="h-5 w-5 text-orange-500 mr-2" />
+            <h3 className="text-lg font-medium text-gray-900">Contacto de Emergencia</h3>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="parentName" className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre Completo (opcional)
-              </label>
-              <input
-                type="text"
-                id="parentName"
-                name="parentName"
-                value={formData.parentName}
-                onChange={handleInputChange}
-                className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.parentName ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Nombre del padre/madre/acudiente"
-              />
-              {errors.parentName && <p className="mt-1 text-sm text-red-600">{errors.parentName}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="parentPhone" className="block text-sm font-medium text-gray-700 mb-1">
-                Teléfono (opcional)
-              </label>
-              <input
-                type="tel"
-                id="parentPhone"
-                name="parentPhone"
-                value={formData.parentPhone}
-                onChange={handleInputChange}
-                className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.parentPhone ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Teléfono del padre/madre/acudiente"
-              />
-              {errors.parentPhone && <p className="mt-1 text-sm text-red-600">{errors.parentPhone}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="parentEmail" className="block text-sm font-medium text-gray-700 mb-1">
-                Email del Padre/Madre/Acudiente
-              </label>
-              <input
-                type="email"
-                id="parentEmail"
-                name="parentEmail"
-                value={formData.parentEmail}
-                onChange={handleInputChange}
-                className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.parentEmail ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="email@ejemplo.com"
-              />
-              {errors.parentEmail && <p className="mt-1 text-sm text-red-600">{errors.parentEmail}</p>}
-            </div>
-
+          <div className="grid grid-cols-1 gap-6">
             <div>
               <label htmlFor="emergencyContact" className="block text-sm font-medium text-gray-700 mb-1">
                 Contacto de Emergencia
@@ -637,6 +578,9 @@ const StudentForm = () => {
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Nombre y teléfono de contacto de emergencia"
               />
+              <p className="mt-2 text-sm text-gray-500">
+                Los datos del padre/madre/acudiente se gestionan mediante la vinculación de usuarios en la sección de "Vínculos Familiares".
+              </p>
             </div>
           </div>
         </div>

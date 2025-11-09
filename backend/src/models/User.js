@@ -92,6 +92,39 @@ const User = sequelize.define('User', {
   lastLogin: {
     type: DataTypes.DATE,
     allowNull: true,
+  },
+  failedLoginAttempts: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    field: 'failed_login_attempts',
+  },
+  accountLockedUntil: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'account_locked_until',
+  },
+  // MFA/2FA fields
+  mfaEnabled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'mfa_enabled',
+  },
+  mfaSecret: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'mfa_secret',
+  },
+  // Password expiration fields
+  lastPasswordChange: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    defaultValue: DataTypes.NOW,
+    field: 'last_password_change',
+  },
+  passwordExpired: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'password_expired',
   }
 }, {
   tableName: 'users',
@@ -100,12 +133,44 @@ const User = sequelize.define('User', {
       if (user.password) {
         const salt = await bcrypt.genSalt(12);
         user.password = await bcrypt.hash(user.password, salt);
+        user.lastPasswordChange = new Date();
       }
     },
     beforeUpdate: async (user) => {
       if (user.changed('password')) {
         const salt = await bcrypt.genSalt(12);
         user.password = await bcrypt.hash(user.password, salt);
+        user.lastPasswordChange = new Date();
+        user.passwordExpired = false;
+      }
+    },
+    afterUpdate: async (user) => {
+      // Save password to history after successful update
+      if (user.changed('password') && user.password) {
+        const PasswordHistory = require('./PasswordHistory');
+        
+        // Save current password to history
+        await PasswordHistory.create({
+          userId: user.id,
+          passwordHash: user.password,
+          changedAt: new Date()
+        });
+        
+        // Keep only last 5 passwords
+        const histories = await PasswordHistory.findAll({
+          where: { userId: user.id },
+          order: [['changedAt', 'DESC']],
+          limit: 100
+        });
+        
+        if (histories.length > 5) {
+          const toDelete = histories.slice(5);
+          await PasswordHistory.destroy({
+            where: {
+              id: toDelete.map(h => h.id)
+            }
+          });
+        }
       }
     }
   }

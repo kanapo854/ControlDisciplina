@@ -38,12 +38,12 @@ const Sidebar = () => {
     },
     
     // Gestión de estudiantes - admin estudiantes y profesores (solo ver)
-    {
+    /*{
       name: 'Estudiantes',
       href: '/estudiantes',
       icon: AcademicCapIcon,
       show: hasPermission(user, PERMISSIONS.MANAGE_STUDENTS) || hasPermission(user, PERMISSIONS.VIEW_STUDENTS)
-    },
+    },*/
     
     // Gestión avanzada de estudiantes - solo admin estudiantes
     {

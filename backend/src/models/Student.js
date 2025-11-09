@@ -92,35 +92,6 @@ const Student = sequelize.define('Student', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  parentName: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    validate: {
-      len: {
-        args: [2, 100],
-        msg: 'El nombre del padre/madre/acudiente debe tener entre 2 y 100 caracteres'
-      }
-    }
-  },
-  parentPhone: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    validate: {
-      len: {
-        args: [7, 20],
-        msg: 'El teléfono debe tener entre 7 y 20 caracteres'
-      }
-    }
-  },
-  parentEmail: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    validate: {
-      isEmail: {
-        msg: 'Email del padre/madre inválido'
-      }
-    }
-  },
   emergencyContact: {
     type: DataTypes.JSONB,
     allowNull: true,

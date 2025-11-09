@@ -49,18 +49,10 @@ const studentValidation = [
   body('gender')
     .isIn(['masculino', 'femenino', 'otro'])
     .withMessage('Género inválido'),
-  body('parentName')
+  body('phone')
     .optional()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('El nombre del padre/madre/acudiente debe tener entre 2 y 100 caracteres'),
-  body('parentPhone')
-    .optional()
-    .isLength({ min: 8, max: 20 })
-    .withMessage('El teléfono del padre/madre/acudiente debe tener entre 8 y 20 caracteres'),
-  body('parentEmail')
-    .optional()
-    .isEmail()
-    .withMessage('Email del padre/madre/acudiente inválido'),
+    .matches(/^\d{8}$/)
+    .withMessage('El teléfono debe tener exactamente 8 dígitos'),
   body('emergencyContactName')
     .optional()
     .isLength({ min: 2, max: 100 })

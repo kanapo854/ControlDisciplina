@@ -245,6 +245,9 @@ const StudentsList = () => {
                         Curso
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acudiente
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Estado
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -289,6 +292,22 @@ const StudentsList = () => {
                           <div className="text-sm text-gray-500">
                             {student.course?.level || '-'}
                           </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {student.parentUser ? (
+                            <div>
+                              <div className="text-sm text-gray-900">
+                                {student.parentUser.name}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {student.parentUser.email}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                              Sin vincular
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${

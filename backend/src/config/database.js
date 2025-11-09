@@ -2,9 +2,9 @@ const { Sequelize } = require('sequelize');
 
 // Configuración de la base de datos PostgreSQL
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'control_disciplina',
+  process.env.DB_NAME || 'ControlDisciplina',
   process.env.DB_USER || 'postgres',
-  process.env.DB_PASSWORD || 'password',
+  process.env.DB_PASSWORD || 'holamundo1',
   {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,

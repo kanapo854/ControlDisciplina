@@ -4,6 +4,10 @@ const Course = require('./Course');
 const Subject = require('./Subject');
 const StudentSubject = require('./StudentSubject');
 const Incident = require('./Incident');
+const PasswordHistory = require('./PasswordHistory');
+const Role = require('./Role');
+const Permission = require('./Permission');
+const RolePermission = require('./RolePermission');
 
 // Asociaciones Course - Student
 Course.hasMany(Student, { 
@@ -97,11 +101,62 @@ Student.belongsTo(User, {
   as: 'parentUser'
 });
 
+// Asociaciones User - PasswordHistory
+User.hasMany(PasswordHistory, {
+  foreignKey: 'userId',
+  as: 'passwordHistory'
+});
+
+PasswordHistory.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
+});
+
+// Asociaciones Role - Permission (muchos a muchos)
+Role.belongsToMany(Permission, {
+  through: RolePermission,
+  foreignKey: 'roleId',
+  otherKey: 'permissionId',
+  as: 'permissions'
+});
+
+Permission.belongsToMany(Role, {
+  through: RolePermission,
+  foreignKey: 'permissionId',
+  otherKey: 'roleId',
+  as: 'roles'
+});
+
+// Asociaciones directas para acceder a la tabla intermedia
+Role.hasMany(RolePermission, {
+  foreignKey: 'roleId',
+  as: 'rolePermissions'
+});
+
+Permission.hasMany(RolePermission, {
+  foreignKey: 'permissionId',
+  as: 'permissionRoles'
+});
+
+RolePermission.belongsTo(Role, {
+  foreignKey: 'roleId',
+  as: 'role'
+});
+
+RolePermission.belongsTo(Permission, {
+  foreignKey: 'permissionId',
+  as: 'permission'
+});
+
 module.exports = {
   User,
   Student,
   Course,
   Subject,
   StudentSubject,
-  Incident
+  Incident,
+  PasswordHistory,
+  Role,
+  Permission,
+  RolePermission
 };

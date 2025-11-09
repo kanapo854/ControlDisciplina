@@ -276,36 +276,83 @@ const StudentDetails = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Padre/Madre/Acudiente */}
           <div className="bg-white shadow rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <UserGroupIcon className="h-5 w-5 text-orange-500 mr-2" />
-              <h3 className="text-lg font-medium text-gray-900">Padre/Madre/Acudiente</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <UserGroupIcon className="h-5 w-5 text-orange-500 mr-2" />
+                <h3 className="text-lg font-medium text-gray-900">Padre/Madre/Acudiente</h3>
+              </div>
+              {!student.parentUser && (
+                <Link
+                  to={`/gestion-estudiantes/${id}/vinculos`}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Gestionar vínculos
+                </Link>
+              )}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Nombre</label>
-                <p className="text-gray-900">{student.parentName || 'N/A'}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">Teléfono</label>
-                <p className="text-gray-900">{student.parentPhone || 'N/A'}</p>
-              </div>
-              
-              {student.parentEmail && (
+            {student.parentUser ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Nombre</label>
+                  <p className="text-gray-900">{student.parentUser.name}</p>
+                </div>
+                
+                {student.parentUser.carnet && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Carnet</label>
+                    <p className="text-gray-900">{student.parentUser.carnet}</p>
+                  </div>
+                )}
+                
                 <div>
                   <label className="text-sm font-medium text-gray-500">Email</label>
-                  <p className="text-gray-900">{student.parentEmail}</p>
+                  <p className="text-gray-900">{student.parentUser.email}</p>
                 </div>
-              )}
-              
-              {student.emergencyContact && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Contacto de Emergencia</label>
-                  <p className="text-gray-900">{student.emergencyContact}</p>
+                
+                {student.parentUser.phone && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Teléfono</label>
+                    <p className="text-gray-900">{student.parentUser.phone}</p>
+                  </div>
+                )}
+                
+                <div className="md:col-span-2">
+                  <Link
+                    to={`/gestion-estudiantes/${id}/vinculos`}
+                    className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    <PencilIcon className="h-4 w-4 mr-1" />
+                    Modificar vinculación
+                  </Link>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <div className="flex items-start">
+                  <UserGroupIcon className="h-5 w-5 text-yellow-400 mt-0.5 mr-3" />
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-yellow-800">No hay padre/madre vinculado</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Este estudiante aún no tiene un padre/madre/acudiente vinculado en el sistema.
+                    </p>
+                    <Link
+                      to={`/gestion-estudiantes/${id}/vinculos`}
+                      className="mt-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                    >
+                      Vincular padre/madre
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {student.emergencyContact && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <label className="text-sm font-medium text-gray-500">Contacto de Emergencia</label>
+                <p className="text-gray-900 mt-1">{student.emergencyContact}</p>
+              </div>
+            )}
           </div>
 
           {/* Inscripciones en Materias */}

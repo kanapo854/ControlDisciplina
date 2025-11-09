@@ -4,6 +4,7 @@ import UsersList from '../components/UsersList';
 import CreateUserForm from '../components/CreateUserForm';
 import EditUserForm from '../components/EditUserForm';
 import FamilyLinksManager from '../components/FamilyLinksManager';
+import RolesManager from '../components/RolesManager';
 
 const UsersPage = () => {
   return (
@@ -36,6 +37,17 @@ const UsersPage = () => {
         
         {/* Gestión de relaciones familiares */}
         <Route path="relaciones-familiares" element={<FamilyLinksManager />} />
+        
+        {/* Gestión de roles y permisos */}
+        <Route path="roles" element={
+          <div>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900">Gestión de Roles y Permisos</h1>
+              <p className="text-gray-600">Administra roles del sistema y sus permisos</p>
+            </div>
+            <RolesManager />
+          </div>
+        } />
         
         {/* Redirección por defecto */}
         <Route path="*" element={<Navigate to="/usuarios" replace />} />

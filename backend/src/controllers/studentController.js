@@ -70,11 +70,23 @@ const getStudents = async (req, res, next) => {
 const getStudent = async (req, res, next) => {
   try {
     const student = await Student.findByPk(req.params.id, {
-      include: [{
-        model: User,
-        as: 'registeredBy',
-        attributes: ['name', 'email']
-      }]
+      include: [
+        {
+          model: User,
+          as: 'registeredBy',
+          attributes: ['name', 'email']
+        },
+        {
+          model: User,
+          as: 'parentUser',
+          attributes: ['id', 'name', 'email', 'phone', 'carnet']
+        },
+        {
+          model: Course,
+          as: 'course',
+          attributes: ['id', 'name', 'grade', 'section', 'level']
+        }
+      ]
     });
 
     if (!student) {

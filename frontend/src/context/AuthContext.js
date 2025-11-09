@@ -17,7 +17,9 @@ const authReducer = (state, action) => {
         isAuthenticated: true,
         user: action.payload.user,
         token: action.payload.token,
-        error: null
+        error: null,
+        mfaRequired: false,
+        mfaUserId: null
       };
     case 'LOGIN_FAILURE':
       return {
@@ -28,6 +30,19 @@ const authReducer = (state, action) => {
         token: null,
         error: action.payload
       };
+    case 'SET_MFA_REQUIRED':
+      return {
+        ...state,
+        loading: false,
+        mfaRequired: true,
+        mfaUserId: action.payload.userId
+      };
+    case 'CLEAR_MFA':
+      return {
+        ...state,
+        mfaRequired: false,
+        mfaUserId: null
+      };
     case 'LOGOUT':
       return {
         ...state,
@@ -35,7 +50,9 @@ const authReducer = (state, action) => {
         isAuthenticated: false,
         user: null,
         token: null,
-        error: null
+        error: null,
+        mfaRequired: false,
+        mfaUserId: null
       };
     case 'UPDATE_USER':
       return {
@@ -58,7 +75,9 @@ const initialState = {
   user: null,
   token: null,
   loading: true,
-  error: null
+  error: null,
+  mfaRequired: false,
+  mfaUserId: null
 };
 
 // Crear contexto
@@ -118,7 +137,17 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login(credentials);
       console.log('✅ AuthContext: Respuesta del servidor:', response);
       
-      // Guardar en localStorage
+      // Si requiere MFA, actualizar estado MFA en el contexto
+      if (response.mfaRequired) {
+        console.log('🔐 MFA requerido, actualizando estado en contexto...');
+        dispatch({ 
+          type: 'SET_MFA_REQUIRED',
+          payload: { userId: response.userId }
+        });
+        return response;
+      }
+      
+      // Guardar en localStorage solo si no requiere MFA
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       
@@ -220,6 +249,11 @@ export const AuthProvider = ({ children }) => {
     return ['admin', 'coordinador'].includes(state.user?.role);
   };
 
+  // Limpiar estado MFA
+  const clearMfa = () => {
+    dispatch({ type: 'CLEAR_MFA' });
+  };
+
   const value = {
     ...state,
     login,
@@ -228,6 +262,7 @@ export const AuthProvider = ({ children }) => {
     updateUser,
     changePassword,
     updateProfile,
+    clearMfa,
     hasPermission,
     isAdmin,
     isCoordinator
