@@ -1,7 +1,7 @@
 services:
   - type: web
     name: control-disciplina-backend
-    env: node
+    runtime: node
     region: oregon
     plan: free
     buildCommand: npm install
@@ -42,7 +42,7 @@ services:
       - key: FRONTEND_URL
         sync: false
       - key: SSL_ENABLED
-        value: false
+        value: "false"
       - key: CORS_ORIGIN
         sync: false
 
