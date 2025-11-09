@@ -48,3 +48,9 @@ temp/
 *.crt
 *.p12
 *.pfx
+
+# Archivos SQL - Scripts de migración y datos sensibles
+*.sql
+!**/migrations/**/*.sql
+# Si necesitas incluir migrations específicas, usa:
+# !backend/src/migrations/*.sql
